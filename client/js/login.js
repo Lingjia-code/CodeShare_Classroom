@@ -1,10 +1,7 @@
-document.getElementById("azureLoginBtn").addEventListener("click", () => {
-    //window.location.href = "student.html";
-    console.log("Azure sign-in mock")
-})
+document.getElementById("instructorBtn").addEventListener("click", () => {
+  window.location.href = "instructor.html";
+});
 
-document.getElementById("joinBtn").addEventListener("click", () => {
-    const roomCode = document.getElementById("roomCodeInput").value.trim();
-
-    window.location.href = `student.html?roomId=${roomCode}`
-})
+document.getElementById("studentBtn").addEventListener("click", () => {
+  window.location.href = "studentJoin.html";
+});

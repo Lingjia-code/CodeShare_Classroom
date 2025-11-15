@@ -4,15 +4,15 @@ require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44
 
 require(["vs/editor/editor.main"], function () {
   editor = monaco.editor.create(document.getElementById('editor'), {
-    value: "// start coding...",
+    value: "// Start coding here...",
     language: "javascript"
   });
 });
 
 function getEditorContent() {
-  return editor.getValue();
+  return editor ? editor.getValue() : "";
 }
 
-function setEditorContent(text) {
-  editor.setValue(text);
+function setEditorContent(content) {
+  if (editor) editor.setValue(content);
 }
