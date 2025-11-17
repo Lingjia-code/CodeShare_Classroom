@@ -1,7 +1,10 @@
-document.getElementById("instructorBtn").addEventListener("click", () => {
-  window.location.href = "instructor.html";
+const instructorBtn = document.getElementById("instructorBtn");
+const studentBtn = document.getElementById("studentBtn");
+
+instructorBtn.addEventListener("click", () => {
+  window.location.href = "/signin?role=instructor";
 });
 
-document.getElementById("studentBtn").addEventListener("click", () => {
-  window.location.href = "studentJoin.html";
+studentBtn.addEventListener("click", () => {
+  window.location.href = "/signin?role=student";
 });

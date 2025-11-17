@@ -1,0 +1,16 @@
+node_modules/
+*/node_modules/
+
+# Dist / Build
+dist/
+build/
+
+# Mac files
+.DS_Store
+
+# VSCode settings
+.vscode/
+
+# .gitignore
+.env
+server/.env
