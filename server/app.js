@@ -10,6 +10,8 @@ import { requireAzureLogin } from './middleware/auth.js';
 import dotenv from "dotenv";
 dotenv.config();
 
+import codeRouter from "./routes/code.js";
+import classroomRoutes from "./routes/classroom.js";
 
 const authConfig = {
   auth: {
@@ -107,6 +109,13 @@ app.get('/', (req, res) => {
 
 // Handles Azure / MSAL interaction errors
 app.use(authProvider.interactionErrorHandler());
+
+
+//------ classroom routes testing ------
+app.use("/api/classrooms", classroomRoutes);
+
+//---------- code refresh/save Routes ----------
+app.use("/api/code", codeRouter);
 
 
 const PORT = process.env.PORT || 3000;
