@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 import WebAppAuthProvider from 'msal-node-wrapper';
 import { requireAzureLogin } from './middleware/auth.js';
 import classroomRoutes from './routes/classroom.js';
+import codeRoutes from './routes/code.js';
 import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -101,6 +102,7 @@ app.use(express.static(path.join(__dirname, '../client')));
 
 // ---------- API Routes ----------
 app.use('/api/classrooms', requireAzureLogin, classroomRoutes);
+app.use('/api/code', requireAzureLogin, codeRoutes);
 
 // ---------- Routes for Sign In / Sign Out ----------
 
