@@ -1,4 +1,12 @@
 # CodeShare_Classroom
+
+Team Member:
+- Lingjia Xu
+- Muhammad Rahman
+- Keyan Ying
+
+Project MVP Demo Recording: [Link](https://drive.google.com/file/d/1wBehBYHKxFv0TXo4qAM6i9GXvMCTfwil/view?usp=sharing)
+
 ```
 codeshare-classroom/
 │
