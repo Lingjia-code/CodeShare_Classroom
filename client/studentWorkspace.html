@@ -2,19 +2,113 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Student Workspace</title>
+  <title>Student Workspace - CodeShare Classroom</title>
   <style>
-    #editor { height: 400px; border: 1px solid #ccc; margin-top: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ccc;
+    }
+    .status-indicator.connected {
+      background: #4caf50;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    #saveBtn {
+      background: #4caf50;
+      color: white;
+    }
+    #saveBtn:hover {
+      background: #388e3c;
+    }
+    #refreshBtn {
+      background: #2196f3;
+      color: white;
+    }
+    #refreshBtn:hover {
+      background: #1976d2;
+    }
+    #helpBtn {
+      background: #ff9800;
+      color: white;
+    }
+    #helpBtn:hover {
+      background: #f57c00;
+    }
+    #editor-container {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    #editor {
+      height: 500px;
+    }
+    .auto-save-indicator {
+      font-size: 12px;
+      color: #666;
+      padding: 5px 10px;
+    }
   </style>
 </head>
 <body>
-  <h2>Workspace</h2>
+  <div class="header">
+    <div>
+      <h2 style="margin: 0;">Student Workspace</h2>
+      <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">
+        Room: <span id="roomCode">Loading...</span>
+      </p>
+    </div>
+    <div class="status">
+      <div class="status-indicator" id="statusIndicator"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </div>
 
-  <div id="editor"></div>
+  <div class="controls">
+    <button id="helpBtn">Request Help</button>
+    <span class="auto-save-indicator" id="autoSaveStatus">✓ Real-time sync enabled</span>
+  </div>
 
-  <button id="saveBtn">Save</button>
-  <button id="refreshBtn">Refresh</button>
+  <div id="editor-container">
+    <div id="editor"></div>
+  </div>
 
+  <!-- Socket.IO Client -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <!-- Monaco Editor -->
   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
   <script src="./js/editor.js"></script>
   <script src="./js/studentWorkspace.js"></script>

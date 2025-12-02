@@ -19,6 +19,11 @@ const classroomFileSchema = new Schema(
       type: String,
       default: '',
     },
+    language: {
+      type: String,
+      default: 'javascript',
+      trim: true,
+    },
     lastUpdated: {
       type: Date,
       default: Date.now,

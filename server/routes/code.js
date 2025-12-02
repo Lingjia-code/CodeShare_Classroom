@@ -115,4 +115,38 @@ router.get('/:roomId/refresh', requireAzureLogin, async (req, res) => {
   }
 });
 
+// GET /api/code/:roomId/student/:studentId → Load specific student's code (for instructors)
+router.get('/:roomId/student/:studentId', requireAzureLogin, async (req, res) => {
+  try {
+    const { roomId, studentId } = req.params;
+
+    const user = await ensureUser(req);
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const classroom = await Classroom.findById(roomId);
+    if (!classroom) {
+      return res.status(404).json({ error: 'Classroom not found' });
+    }
+
+    // Verify user is the instructor of this classroom
+    if (user.role === 'instructor' && classroom.instructor.toString() !== user._id.toString()) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const file = classroom.files.find(
+      (f) => f.student.toString() === studentId
+    );
+
+    res.json({
+      code: file ? file.content : '',
+      language: file ? file.language : 'javascript'
+    });
+  } catch (error) {
+    console.error('Error fetching student code:', error);
+    res.status(500).json({ error: 'Failed to fetch student code' });
+  }
+});
+
 export default router;

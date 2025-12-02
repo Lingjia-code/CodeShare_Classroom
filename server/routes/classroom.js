@@ -4,9 +4,34 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
+// Get current user info
+router.get('/me', async (req, res) => {
+  try {
+    const user = await ensureUser(req);
+
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    return res.json({
+      userId: user._id.toString(),
+      username: user.username,
+      role: user.role,
+      azureId: user.azureId
+    });
+  } catch (err) {
+    console.error('Error getting user info:', err);
+    return res.status(500).json({ error: 'Failed to get user info' });
+  }
+});
+
 function getAzureIdentity(req) {
   const account = req.authContext?.account || {};
   const claims = account.idTokenClaims || {};
+
+  console.log('=== Getting Azure Identity ===');
+  console.log('account:', account);
+  console.log('claims:', claims);
 
   const azureId =
     claims.oid ||
@@ -21,6 +46,9 @@ function getAzureIdentity(req) {
     account.username ||
     claims.preferred_username ||
     'Unknown User';
+
+  console.log('Extracted azureId:', azureId);
+  console.log('Extracted username:', username);
 
   return { azureId, username };
 }
@@ -67,13 +95,20 @@ async function generateUniqueRoomCode() {
 
 router.post('/', async (req, res) => {
   try {
+    console.log('=== Create Classroom Request ===');
+    console.log('authContext:', req.authContext);
+    console.log('account:', req.authContext?.account);
+
     const instructor = await ensureUser(req, 'instructor');
+    console.log('Instructor from ensureUser:', instructor);
 
     if (!instructor) {
+      console.log('No instructor found - returning 401');
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
     const roomCode = await generateUniqueRoomCode();
+    console.log('Generated room code:', roomCode);
 
     const classroom = await Classroom.create({
       roomCode,
@@ -81,6 +116,7 @@ router.post('/', async (req, res) => {
       students: [],
       files: [],
     });
+    console.log('Classroom created:', classroom);
 
     return res.status(201).json({
       _id: classroom._id,

@@ -5,11 +5,13 @@ import logger from 'morgan';
 import sessions from 'express-session';
 import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
+import { createServer } from 'http';
 
 import WebAppAuthProvider from 'msal-node-wrapper';
 import { requireAzureLogin } from './middleware/auth.js';
 import classroomRoutes from './routes/classroom.js';
 import codeRoutes from './routes/code.js';
+import { initializeSocket } from './socket.js';
 import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -33,7 +35,7 @@ mongoose
 const authConfig = {
   auth: {
     clientId: process.env.AZURE_CLIENT_ID,
-    authority: "https://login.microsoftonline.com/f6b6dd5b-f02f-441a-99a0-162ac5060bd2",
+    authority: "https://login.microsoftonline.com/common",
     clientSecret: process.env.AZURE_CLIENT_SECRET,
     redirectUri: "/redirect",
   },
@@ -94,7 +96,46 @@ if (DEV_BYPASS_AUTH) {
 } else {
   authProvider = await WebAppAuthProvider.WebAppAuthProvider.initialize(authConfig);
   // This wires up authentication & redirect handling
-  app.use(authProvider.authenticate());
+  // IMPORTANT: Pass empty config to ensure authentication state is properly maintained
+  app.use(authProvider.authenticate({
+    protectAllRoutes: false // We'll protect routes individually with requireAzureLogin
+  }));
+
+  // Fix: Manually populate account from session
+  // This runs after MSAL's authenticate() middleware
+  app.use((req, _res, next) => {
+    console.log('=== Custom Account Population Middleware ===');
+    console.log('Path:', req.path);
+    console.log('Has authContext:', !!req.authContext);
+    console.log('Has account in authContext:', !!req.authContext?.account);
+    console.log('Has account in session:', !!req.session?.account);
+
+    // If MSAL just authenticated and set account, save it to session
+    if (req.authContext?.account && !req.session?.account) {
+      console.log('MSAL just authenticated - saving account to session');
+      req.session.account = req.authContext.account;
+      console.log('✅ Account saved to session:', req.authContext.account.username);
+    }
+    // If no account in authContext but we have one in session, restore it
+    else if (req.authContext && !req.authContext.account && req.session?.account) {
+      console.log('Restoring account from session');
+      req.authContext.account = req.session.account;
+      console.log('✅ Account restored:', req.authContext.account.username);
+    }
+    // If both have accounts, keep them in sync
+    else if (req.authContext?.account && req.session?.account) {
+      // Check if they're different (user logged in as different account)
+      const currentUsername = req.authContext.account.username;
+      const sessionUsername = req.session.account.username;
+      if (currentUsername !== sessionUsername) {
+        console.log(`Account changed: ${sessionUsername} -> ${currentUsername}`);
+        req.session.account = req.authContext.account;
+        console.log('✅ Updated session with new account');
+      }
+    }
+
+    next();
+  });
 }
 
 // Serve static frontend
@@ -105,6 +146,34 @@ app.use('/api/classrooms', requireAzureLogin, classroomRoutes);
 app.use('/api/code', requireAzureLogin, codeRoutes);
 
 // ---------- Routes for Sign In / Sign Out ----------
+
+// Custom handler to capture account after successful MSAL redirect
+app.use('/redirect', (req, _res, next) => {
+  console.log('=== Redirect Handler ===');
+  console.log('Path:', req.path);
+  console.log('Query:', req.query);
+
+  // MSAL will process this in the authenticate middleware,
+  // account will be available after that
+  next();
+});
+
+// Add another middleware AFTER redirect to capture the account
+app.post('/redirect', (req, _res, next) => {
+  console.log('=== Post-Redirect Account Capture ===');
+  console.log('authContext:', req.authContext);
+  console.log('account:', req.authContext?.account);
+
+  // At this point, MSAL should have populated the account
+  if (req.authContext?.account) {
+    req.session.account = req.authContext.account;
+    console.log('✅ Saved account to session:', req.authContext.account.username);
+  } else {
+    console.log('⚠️ No account found in authContext after redirect');
+  }
+
+  next();
+});
 
 app.get('/signin', (req, res, next) => {
   const role = req.query.role;
@@ -117,6 +186,11 @@ app.get('/signin', (req, res, next) => {
   }
 
   console.log(`Selected role: ${role}, postLoginRedirectUri: ${redirect}`);
+
+  // Store pending role in session so we know which role to associate with after login
+  if (role) {
+    req.session.pendingRole = role;
+  }
 
   // In dev bypass mode, skip MSAL and just jump to the page
   if (DEV_BYPASS_AUTH) {
@@ -157,9 +231,12 @@ if (authProvider) {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+// Create HTTP server and initialize Socket.IO
+const httpServer = createServer(app);
+initializeSocket(httpServer);
+
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server listening on http://localhost:${PORT}`);
 });
-
 
 export default app;
