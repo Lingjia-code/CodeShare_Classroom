@@ -84,27 +84,9 @@
   </style>
 </head>
 <body>
-  <div class="header">
-    <div>
-      <h2 style="margin: 0;">Student Workspace</h2>
-      <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">
-        Room: <span id="roomCode">Loading...</span>
-      </p>
-    </div>
-    <div class="status">
-      <div class="status-indicator" id="statusIndicator"></div>
-      <span id="statusText">Connecting...</span>
-    </div>
-  </div>
+  <h2>Workspace</h2>
 
-  <div class="controls">
-    <button id="helpBtn">Request Help</button>
-    <span class="auto-save-indicator" id="autoSaveStatus">✓ Real-time sync enabled</span>
-  </div>
-
-  <div id="editor-container">
-    <div id="editor"></div>
-  </div>
+  <div id="editor"></div>
 
   <!-- Socket.IO Client -->
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
