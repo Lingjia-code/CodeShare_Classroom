@@ -1,9 +1,24 @@
-import express from 'express';
+import { fileURLToPath } from 'url';
 import path, { dirname } from 'path';
+import fs from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env file only if it exists (for local development)
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  const dotenv = await import('dotenv');
+  dotenv.config({ path: envPath });
+  console.log('Loaded .env file for local development');
+} else {
+  console.log('No .env file found, using environment variables from Azure');
+}
+
+import express from 'express';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import sessions from 'express-session';
-import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import { createServer } from 'http';
 
@@ -11,13 +26,8 @@ import WebAppAuthProvider from 'msal-node-wrapper';
 import { requireAzureLogin } from './middleware/auth.js';
 import classroomRoutes from './routes/classroom.js';
 import codeRoutes from './routes/code.js';
+import executeRoutes from './routes/execute.js';
 import { initializeSocket } from './socket.js';
-import dotenv from 'dotenv';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-dotenv.config({ path: path.join(__dirname, '.env') });
 
 const MONGO_URI =
   process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/codeshare_classroom';
@@ -98,11 +108,9 @@ if (DEV_BYPASS_AUTH) {
   // This wires up authentication & redirect handling
   // IMPORTANT: Pass empty config to ensure authentication state is properly maintained
   app.use(authProvider.authenticate({
-    protectAllRoutes: false // We'll protect routes individually with requireAzureLogin
+    protectAllRoutes: false
   }));
 
-  // Fix: Manually populate account from session
-  // This runs after MSAL's authenticate() middleware
   app.use((req, _res, next) => {
     console.log('=== Custom Account Population Middleware ===');
     console.log('Path:', req.path);
@@ -114,13 +122,13 @@ if (DEV_BYPASS_AUTH) {
     if (req.authContext?.account && !req.session?.account) {
       console.log('MSAL just authenticated - saving account to session');
       req.session.account = req.authContext.account;
-      console.log('✅ Account saved to session:', req.authContext.account.username);
+      console.log('Account saved to session:', req.authContext.account.username);
     }
     // If no account in authContext but we have one in session, restore it
     else if (req.authContext && !req.authContext.account && req.session?.account) {
       console.log('Restoring account from session');
       req.authContext.account = req.session.account;
-      console.log('✅ Account restored:', req.authContext.account.username);
+      console.log('Account restored:', req.authContext.account.username);
     }
     // If both have accounts, keep them in sync
     else if (req.authContext?.account && req.session?.account) {
@@ -130,7 +138,7 @@ if (DEV_BYPASS_AUTH) {
       if (currentUsername !== sessionUsername) {
         console.log(`Account changed: ${sessionUsername} -> ${currentUsername}`);
         req.session.account = req.authContext.account;
-        console.log('✅ Updated session with new account');
+        console.log('Updated session with new account');
       }
     }
 
@@ -144,6 +152,7 @@ app.use(express.static(path.join(__dirname, '../client')));
 // ---------- API Routes ----------
 app.use('/api/classrooms', requireAzureLogin, classroomRoutes);
 app.use('/api/code', requireAzureLogin, codeRoutes);
+app.use('/api/execute', requireAzureLogin, executeRoutes);
 
 // ---------- Routes for Sign In / Sign Out ----------
 
@@ -167,9 +176,9 @@ app.post('/redirect', (req, _res, next) => {
   // At this point, MSAL should have populated the account
   if (req.authContext?.account) {
     req.session.account = req.authContext.account;
-    console.log('✅ Saved account to session:', req.authContext.account.username);
+    console.log('Saved account to session:', req.authContext.account.username);
   } else {
-    console.log('⚠️ No account found in authContext after redirect');
+    console.log('No account found in authContext after redirect');
   }
 
   next();

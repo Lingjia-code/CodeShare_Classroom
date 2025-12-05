@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node server/app.js",
+    "dev": "DOTENV_CONFIG_PATH=server/.env node -r dotenv/config server/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -20,6 +21,7 @@
   "homepage": "https://github.com/Lingjia-code/CodeShare_Classroom#readme",
   "dependencies": {
     "@azure/msal-node": "^3.8.2",
+    "axios": "^1.13.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
