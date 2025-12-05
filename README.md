@@ -5,43 +5,14 @@ Team Member:
 - Muhammad Rahman
 - Keyan Ying
 
-Project MVP Demo Recording: [Link](https://drive.google.com/file/d/1wBehBYHKxFv0TXo4qAM6i9GXvMCTfwil/view?usp=sharing)
+Project Demo: [Link](https://drive.google.com/file/d/1qg7E4BPOrCfVc6UR3b3mSmZifY3Fudho/view?usp=sharing)
 
+
+Make sure you have *.env* file under */server* for your local testing
 ```
-codeshare-classroom/
-│
-├── server/          
-│   │
-│   ├── app.js                        # Express app entry point (sets routes, DB, static files)
-│   ├── socket.js                     # Socket.IO real-time handlers (P1)
-│   │
-│   ├── routes/                       # REST API routes
-│   │   ├── auth.js                   # Azure authentication routes
-│   │   ├── classrooms.js             # Create classroom, join classroom, fetch students
-│   │   └── code.js                   # Save code, refresh code, fetch code
-│   │
-│   ├── models/                       # Mongoose schemas
-│   │   ├── User.js                   # User model: username, role (student/instructor)
-│   │   └── Classroom.js              # Classroom model: roomCode, students, files
-│   │
-│   ├── middleware/
-│   │   └── auth.js 
-│   │
-│   └── utils/
-│
-├── client/        
-│   │
-│   ├── login.html                    # Landing page: choose Student or Instructor
-│   ├── instructor.html               # Instructor dashboard: create class, list classes
-│   ├── instructorClass.html          # Classroom view: list students in a class
-│   ├── studentJoin.html              # Student enters join code to access workspace
-│   ├── studentWorkspace.html         # Student coding page (Monaco Editor)
-│   │
-│   ├── js/                           # All frontend JavaScript logic
-│   │   ├── login.js                  # Handles role selection and redirects
-│   │   ├── instructor.js             # Classroom creation & loading instructor classrooms
-│   │   ├── instructorClass.js        # Load students and open student workspace
-│   │   ├── studentJoin.js            # Student joins a classroom via join code
-│   │   ├── studentWorkspace.js       # Save/refresh code for a given classroom
-│   │   └── editor.js                 # Monaco Editor initialization and helpers
+AZURE_CLIENT_ID=
+AZURE_CLIENT_SECRET=
+MONGO_URI=""
+DEV_BYPASS_AUTH=0
+JUDGE0_API_KEY=
 ```
