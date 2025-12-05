@@ -3,18 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <title>Instructor Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    h2 {
+      margin: 0;
+    }
+    .signout-btn {
+      padding: 8px 16px;
+      background: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .signout-btn:hover {
+      background: #d32f2f;
+    }
+    section {
+      margin-top: 30px;
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      background: #f9f9f9;
+    }
+    h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    #createClassBtn {
+      padding: 10px 20px;
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #createClassBtn:hover {
+      background: #1976d2;
+    }
+    #createResult {
+      margin-top: 10px;
+      color: #555;
+    }
+    #classList {
+      list-style: none;
+      padding: 0;
+    }
+    #classList li {
+      padding: 10px;
+      margin: 10px 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #classList li:hover {
+      background: #f0f0f0;
+    }
+  </style>
 </head>
 <body>
-  <header class="top-bar">
-    <div class="left-controls">
-      <button onclick="history.back()" class="back-btn">⬅ Back</button>
-    </div>
-    <div class="right-controls">
-      <a href="/signout" class="signout-btn">Sign Out</a>
-    </div>
-  </header>
-
-  <h2>Instructor Dashboard</h2>
+  <div class="header">
+    <h2>Instructor Dashboard</h2>
+    <button id="signOutBtn" class="signout-btn">Sign Out</button>
+  </div>
 
   <section>
     <h3>Create Classroom</h3>
@@ -23,7 +89,10 @@
   </section>
 
   <section>
-    <h3>Your Classrooms</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h3 style="margin: 0;">Your Classrooms</h3>
+      <button id="refreshBtn" style="padding: 8px 16px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Refresh</button>
+    </div>
     <ul id="classList"></ul>
   </section>
 

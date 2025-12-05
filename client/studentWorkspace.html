@@ -37,6 +37,7 @@
     .controls {
       display: flex;
       gap: 10px;
+      margin-bottom: 20px;
     }
     button {
       padding: 10px 20px;
@@ -46,20 +47,6 @@
       font-size: 14px;
       transition: background 0.3s;
     }
-    #saveBtn {
-      background: #4caf50;
-      color: white;
-    }
-    #saveBtn:hover {
-      background: #388e3c;
-    }
-    #refreshBtn {
-      background: #2196f3;
-      color: white;
-    }
-    #refreshBtn:hover {
-      background: #1976d2;
-    }
     #helpBtn {
       background: #ff9800;
       color: white;
@@ -67,26 +54,106 @@
     #helpBtn:hover {
       background: #f57c00;
     }
+    #backBtn {
+      background: #757575;
+      color: white;
+    }
+    #backBtn:hover {
+      background: #616161;
+    }
+    #signOutBtn {
+      background: #f44336;
+      color: white;
+    }
+    #signOutBtn:hover {
+      background: #d32f2f;
+    }
     #editor-container {
       background: white;
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
     }
     #editor {
-      height: 500px;
+      height: 400px;
     }
     .auto-save-indicator {
       font-size: 12px;
       color: #666;
       padding: 5px 10px;
     }
+    #output-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 15px;
+    }
+    #output-header {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    #output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      min-height: 100px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .output-error {
+      color: #f48771;
+    }
+    .output-success {
+      color: #89d185;
+    }
   </style>
 </head>
 <body>
-  <h2>Workspace</h2>
+  <div class="header">
+    <div>
+      <h2 style="margin: 0;">Student Workspace</h2>
+      <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">
+        Room: <span id="roomCode">Loading...</span>
+      </p>
+    </div>
+    <div class="status">
+      <div class="status-indicator" id="statusIndicator"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </div>
 
-  <div id="editor"></div>
+  <div class="controls">
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <label for="languageSelect">Language:</label>
+      <select id="languageSelect" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+        <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="java">Java</option>
+        <option value="cpp">C++</option>
+        <option value="c">C</option>
+      </select>
+      <button id="runBtn" style="background: #4caf50; color: white;">▶ Run Code</button>
+    </div>
+    <button id="helpBtn">Request Help</button>
+    <span class="auto-save-indicator" id="autoSaveStatus">✓ Real-time sync enabled</span>
+    <button id="backBtn">← Back</button>
+    <button id="signOutBtn">Sign Out</button>
+  </div>
+
+  <div id="editor-container">
+    <div id="editor"></div>
+  </div>
+
+  <div id="output-container">
+    <div id="output-header">Output:</div>
+    <div id="output">Ready to run code...</div>
+  </div>
 
   <!-- Socket.IO Client -->
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>

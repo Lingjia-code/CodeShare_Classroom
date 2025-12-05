@@ -53,6 +53,39 @@
       background: #4caf50;
     }
 
+    .header-buttons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-header {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.3s;
+    }
+
+    .btn-back {
+      background: #757575;
+      color: white;
+    }
+
+    .btn-back:hover {
+      background: #616161;
+    }
+
+    .btn-signout {
+      background: #f44336;
+      color: white;
+    }
+
+    .btn-signout:hover {
+      background: #d32f2f;
+    }
+
     .container {
       display: flex;
       height: calc(100vh - 60px);
@@ -214,6 +247,53 @@
       padding: 40px 20px;
       color: #999;
     }
+
+    #output-container {
+      background: white;
+      padding: 15px;
+      border-top: 2px solid #e0e0e0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    #output-header {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    #output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      min-height: 80px;
+    }
+
+    .output-error {
+      color: #f48771;
+    }
+
+    .output-success {
+      color: #89d185;
+    }
+
+    .language-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-right: 10px;
+    }
+
+    .language-controls select {
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -225,9 +305,13 @@
         <span id="studentCount">0 students</span>
       </div>
     </div>
-    <div class="status">
-      <div class="status-indicator" id="statusIndicator"></div>
-      <span id="statusText">Connecting...</span>
+    <div class="header-buttons">
+      <div class="status">
+        <div class="status-indicator" id="statusIndicator"></div>
+        <span id="statusText">Connecting...</span>
+      </div>
+      <button class="btn-header btn-back" id="backBtn">← Back</button>
+      <button class="btn-header btn-signout" id="signOutBtn">Sign Out</button>
     </div>
   </div>
 
@@ -243,6 +327,17 @@
       <div class="editor-header">
         <h3 id="currentStudentName">Select a student to view their code</h3>
         <div class="editor-actions">
+          <div class="language-controls" id="languageControls" style="display: none;">
+            <label for="languageSelect">Language:</label>
+            <select id="languageSelect">
+              <option value="javascript">JavaScript</option>
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+              <option value="c">C</option>
+            </select>
+            <button class="btn btn-success" id="runBtn">▶ Run Code</button>
+          </div>
           <button class="btn btn-success" id="resolveHelpBtn" style="display: none;">
             ✓ Resolve Help Request
           </button>
@@ -258,6 +353,11 @@
         </div>
         <div id="editor" style="display: none;"></div>
       </div>
+
+      <div id="output-container" style="display: none;">
+        <div id="output-header">Output:</div>
+        <div id="output">Ready to run code...</div>
+      </div>
     </div>
   </div>
 
@@ -271,7 +371,7 @@
     require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' }});
     require(["vs/editor/editor.main"], function () {
       editor = monaco.editor.create(document.getElementById('editor'), {
-        value: "// Select a student to view their code...",
+        value: "",
         language: "javascript",
         theme: "vs-dark",
         automaticLayout: true,

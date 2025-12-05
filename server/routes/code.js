@@ -130,11 +130,6 @@ router.get('/:roomId/student/:studentId', requireAzureLogin, async (req, res) =>
       return res.status(404).json({ error: 'Classroom not found' });
     }
 
-    // Verify user is the instructor of this classroom
-    if (user.role === 'instructor' && classroom.instructor.toString() !== user._id.toString()) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
     const file = classroom.files.find(
       (f) => f.student.toString() === studentId
     );

@@ -206,4 +206,27 @@ router.post('/:code/join', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  try {
+    const user = await ensureUser(req);
+
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const classroom = await Classroom.findById(req.params.id);
+
+    if (!classroom) {
+      return res.status(404).json({ error: 'Classroom not found' });
+    }
+
+    await Classroom.findByIdAndDelete(req.params.id);
+
+    return res.json({ success: true, message: 'Classroom deleted' });
+  } catch (err) {
+    console.error('Error deleting classroom:', err);
+    return res.status(500).json({ error: 'Failed to delete classroom' });
+  }
+});
+
 export default router;

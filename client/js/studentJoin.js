@@ -11,3 +11,12 @@ document.getElementById("joinBtn").addEventListener("click", async () => {
     alert("Invalid join code");
   }
 });
+
+document.getElementById('signOutBtn').addEventListener('click', async () => {
+  try {
+    await fetch('/signout', { method: 'POST' });
+  } catch (err) {
+    console.error('Sign out error:', err);
+  }
+  window.location.href = '/';
+});

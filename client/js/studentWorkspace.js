@@ -1,4 +1,3 @@
-// Get roomId from URL
 const urlParams = new URLSearchParams(window.location.search);
 const roomId = urlParams.get("roomId");
 
@@ -7,31 +6,27 @@ if (!roomId) {
   window.location.href = "/studentJoin.html";
 }
 
-// Socket.IO connection
 let socket = null;
 let isConnected = false;
 let autoSaveEnabled = true;
 let debounceTimer = null;
-let isUpdatingFromRemote = false; // Flag to prevent echo when receiving remote updates
+let isUpdatingFromRemote = false;
+let currentLanguage = 'javascript';
 
-// Get user info from API
 async function getUserInfo() {
   try {
-    // Get classroom info to display room code
     const classroomRes = await fetch(`/api/classrooms/${roomId}`);
     if (classroomRes.ok) {
       const classroom = await classroomRes.json();
       document.getElementById('roomCode').textContent = classroom.roomCode;
     }
 
-    // Get current user info from authentication
     const userRes = await fetch('/api/classrooms/me');
     if (!userRes.ok) {
       throw new Error('Failed to get user info');
     }
 
     const userInfo = await userRes.json();
-    console.log('User info:', userInfo);
 
     return {
       userId: userInfo.userId,
@@ -39,23 +34,20 @@ async function getUserInfo() {
       role: userInfo.role
     };
   } catch (err) {
-    console.error('Error getting user info:', err);
+    console.error('Auth error:', err);
     alert('Please sign in to continue');
     window.location.href = '/';
     return null;
   }
 }
 
-// Initialize Socket.IO connection
 async function initializeSocket() {
   const userInfo = await getUserInfo();
-
   if (!userInfo) {
     updateStatus(false, 'Failed to authenticate');
     return;
   }
 
-  // Connect to Socket.IO server
   socket = io({
     auth: {
       userId: userInfo.userId,
@@ -64,52 +56,33 @@ async function initializeSocket() {
     }
   });
 
-  // Connection successful
   socket.on('connect', () => {
-    console.log('✅ Socket connected');
     isConnected = true;
     updateStatus(true, 'Connected');
-
-    // Join the classroom room
     socket.emit('join-classroom', roomId);
   });
 
-  // Join confirmation
-  socket.on('classroom-users', (users) => {
-    console.log('Users in classroom:', users);
-  });
-
-  // User joined notification
-  socket.on('user-joined', (data) => {
-    console.log(`${data.username} joined the classroom`);
-  });
-
-  // User left notification
-  socket.on('user-left', (data) => {
-    console.log(`${data.username} left the classroom`);
-  });
-
-  // Help resolved notification
   socket.on('help-resolved-notification', (data) => {
     if (data.studentId === userInfo.userId) {
       alert(`${data.instructorName} has responded to your help request!`);
     }
   });
 
-  // Instructor code update (when instructor edits student's code)
   socket.on('instructor-code-update', (data) => {
-    // Only update if this is the current student's code
     if (data.studentId === userInfo.userId) {
-      console.log('Received code update from instructor:', data.instructorName);
-
-      // Set flag to prevent echo
       isUpdatingFromRemote = true;
       setEditorContent(data.code);
 
-      // Clear flag after a short delay
+      if (data.language && data.language !== currentLanguage) {
+        currentLanguage = data.language;
+        document.getElementById('languageSelect').value = data.language;
+        if (editor) {
+          monaco.editor.setModelLanguage(editor.getModel(), data.language);
+        }
+      }
+
       setTimeout(() => { isUpdatingFromRemote = false; }, 100);
 
-      // Show notification
       const autoSaveStatus = document.getElementById('autoSaveStatus');
       autoSaveStatus.textContent = `✓ Updated by ${data.instructorName}`;
       autoSaveStatus.style.color = '#2196f3';
@@ -121,28 +94,34 @@ async function initializeSocket() {
     }
   });
 
-  // Connection error
+  socket.on('instructor-execution-result', (data) => {
+    if (data.studentId === userInfo.userId) {
+      const outputDiv = document.getElementById('output');
+      if (data.result.success) {
+        outputDiv.innerHTML = `<div class="output-success">Exit Code: ${data.result.exitCode || 0}</div>\n${data.result.output || '(no output)'}`;
+      } else {
+        outputDiv.innerHTML = `<div class="output-error">Error:</div>\n${data.result.error}`;
+      }
+    }
+  });
+
   socket.on('connect_error', (error) => {
     console.error('Socket connection error:', error);
     isConnected = false;
     updateStatus(false, 'Connection error');
   });
 
-  // Disconnection
   socket.on('disconnect', () => {
-    console.log('❌ Socket disconnected');
     isConnected = false;
     updateStatus(false, 'Disconnected');
   });
 
-  // Error from server
   socket.on('error', (data) => {
     console.error('Server error:', data.message);
     alert(`Error: ${data.message}`);
   });
 }
 
-// Update connection status indicator
 function updateStatus(connected, text) {
   const indicator = document.getElementById('statusIndicator');
   const statusText = document.getElementById('statusText');
@@ -156,26 +135,18 @@ function updateStatus(connected, text) {
   }
 }
 
-// Send code changes to server (with debouncing)
 function sendCodeChange(code) {
-  if (!isConnected || !autoSaveEnabled || isUpdatingFromRemote) {
-    return;
-  }
+  if (!isConnected || !autoSaveEnabled || isUpdatingFromRemote) return;
 
-  // Clear existing timer
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
-  }
+  if (debounceTimer) clearTimeout(debounceTimer);
 
-  // Set new timer - wait 1 second after typing stops
   debounceTimer = setTimeout(() => {
     socket.emit('code-change', {
       classroomId: roomId,
       code: code,
-      language: 'javascript'
+      language: currentLanguage
     });
 
-    // Update auto-save status
     const autoSaveStatus = document.getElementById('autoSaveStatus');
     autoSaveStatus.textContent = '✓ Synced';
     autoSaveStatus.style.color = '#4caf50';
@@ -184,10 +155,9 @@ function sendCodeChange(code) {
       autoSaveStatus.textContent = '✓ Real-time sync enabled';
       autoSaveStatus.style.color = '#666';
     }, 2000);
-  }, 1000); // 1 second debounce
+  }, 50);
 }
 
-// Help request button
 document.getElementById("helpBtn").addEventListener("click", () => {
   if (!isConnected) {
     alert('Not connected to server. Please refresh the page.');
@@ -195,45 +165,115 @@ document.getElementById("helpBtn").addEventListener("click", () => {
   }
 
   const message = prompt('Describe what you need help with:');
-
   if (message && message.trim()) {
     socket.emit('help-request', {
       classroomId: roomId,
       message: message.trim()
     });
-
     alert('Help request sent to instructor!');
   }
 });
 
-// Listen for editor changes and send to server
+document.getElementById("backBtn").addEventListener("click", () => {
+  if (socket && isConnected) {
+    socket.emit('leave-classroom', roomId);
+    socket.disconnect();
+  }
+  window.location.href = '/studentJoin.html';
+});
+
+document.getElementById("signOutBtn").addEventListener("click", async () => {
+  if (socket && isConnected) {
+    socket.emit('leave-classroom', roomId);
+    socket.disconnect();
+  }
+
+  try {
+    await fetch('/signout', { method: 'POST' });
+  } catch (err) {
+    console.error('Sign out error:', err);
+  }
+
+  window.location.href = '/';
+});
+
 function onEditorChange(code) {
   sendCodeChange(code);
 }
 
-// Initialize everything when page loads
 window.addEventListener('load', async () => {
-  // Initialize Socket.IO
   await initializeSocket();
 
-  // Load initial code from server
   try {
     const res = await fetch(`/api/code/${roomId}/refresh`);
     if (res.ok) {
       const data = await res.json();
-      if (data.code) {
-        setEditorContent(data.code);
-      }
+      if (data.code) setEditorContent(data.code);
     }
   } catch (err) {
-    console.error('Failed to load initial code:', err);
+    console.error('Failed to load code:', err);
   }
 });
 
-// Cleanup on page unload
 window.addEventListener('beforeunload', () => {
   if (socket && isConnected) {
     socket.emit('leave-classroom', roomId);
     socket.disconnect();
+  }
+});
+
+document.getElementById('languageSelect').addEventListener('change', (e) => {
+  currentLanguage = e.target.value;
+
+  if (editor) {
+    monaco.editor.setModelLanguage(editor.getModel(), currentLanguage);
+  }
+
+  if (socket && isConnected) {
+    socket.emit('code-change', {
+      classroomId: roomId,
+      code: getEditorContent(),
+      language: currentLanguage
+    });
+  }
+});
+
+document.getElementById('runBtn').addEventListener('click', async () => {
+  const code = getEditorContent();
+  const outputDiv = document.getElementById('output');
+
+  if (!code.trim()) {
+    outputDiv.textContent = 'Error: No code to run';
+    outputDiv.className = 'output-error';
+    return;
+  }
+
+  outputDiv.textContent = 'Running code...';
+  outputDiv.className = '';
+
+  try {
+    const response = await fetch('/api/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, language: currentLanguage })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      outputDiv.innerHTML = `<div class="output-success">Exit Code: ${result.exitCode || 0}</div>\n${result.output || '(no output)'}`;
+    } else {
+      outputDiv.innerHTML = `<div class="output-error">Error:</div>\n${result.error || 'Unknown error occurred'}`;
+    }
+
+    if (socket && isConnected) {
+      socket.emit('student-execution-result', {
+        classroomId: roomId,
+        result
+      });
+    }
+  } catch (err) {
+    console.error('Execution error:', err);
+    outputDiv.innerHTML = `<div class="output-error">Failed to execute code:</div>\n${err.message}`;
   }
 });
